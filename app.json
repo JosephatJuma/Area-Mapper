@@ -14,6 +14,14 @@
     "assetBundlePatterns": [
       "**/*"
     ],
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow this app to access you and pick images"
+        }
+      ]
+    ],
     "ios": {
       "supportsTablet": true
     },

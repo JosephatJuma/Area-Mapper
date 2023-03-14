@@ -1,20 +1,41 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
-
+import { StyleSheet, Text, View } from "react-native";
+import GetStarted from "./Components/GetStarted";
+import Home from "./Components/Home";
+import Register from "./auth/Register";
+import { useNavigation, NavigationContainer } from "@react-navigation/native";
+import {
+  createStackNavigator,
+  CardStyleInterpolators,
+} from "@react-navigation/stack";
 export default function App() {
+  const getStaretedScreen = () => {
+    const nav = useNavigation();
+    return <GetStarted toConset={() => nav.navigate("Home")} />;
+  };
+  const HomeScreen = () => {
+    const nav = useNavigation();
+    return <Home toReg={() => nav.navigate("Register")} />;
+  };
+  const registerScreen = () => {
+    return <Register />;
+  };
+  const Stack = createStackNavigator();
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <NavigationContainer>
+      <Stack.Navigator screenOptions={styles.screenOptions}>
+        <Stack.Screen name="Get started" component={getStaretedScreen} />
+        <Stack.Screen name="Home" component={HomeScreen} />
+        <Stack.Screen name="Register" component={registerScreen} />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
+  screenOptions: {
+    headerShown: false,
+    gestureEnabled: true,
+    gestureDirection: "horizontal",
+    cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
   },
 });
