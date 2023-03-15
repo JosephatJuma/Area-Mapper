@@ -15,7 +15,7 @@ This is a basic app that enabes the user to mark an area of a compound on the th
 
 #### Respondent Register. 
 The user is asked to register the first time they access the app. The data that is required includes;
-1. Do you consent to be registered on our program? -(Bolean, required) if true, the user registers continues to 2,3,4,5,6, and then 7. Else, the user continues to home to start mapping the compound. 
+1. Do you consent to be registered on our program? -(Bolean, required) if true, the user registers continues to 2,3,4,5,6, and then 7. Else, the user continues to 7 to start mapping the compound. 
 2. Registration date -(Date, required). This is auto generated using the JavaScript Date Function when the function to submit data is invoked submit.
 3. Respondent Name -(String/Free Text, required). This is picked from the user input and validated on submit.
 4. Respondent picture (Image, required). This is picked either by uploading the the image file from the phone storage or by taking a photo using the phone camera. The user is requested to allow the app to use the camera. The API used to achieve this is [Expo ImagePicker](https://docs.expo.dev/versions/v48.0.0/sdk/imagepicker/) 
