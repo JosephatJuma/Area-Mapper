@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
   textArea: { alignContent: "center", alignItems: "center" },
   welcome: { color: "#ff5349", fontWeight: "bold", fontSize: 30 },
   text: {
-    color: "#778899",
+    color: "#13a1a8",
     fontWeight: "600",
     fontSize: 20,
     textAlign: "center",

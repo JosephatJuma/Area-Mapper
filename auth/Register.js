@@ -314,8 +314,8 @@ const styles = StyleSheet.create({
   },
 
   text: {
-    color: "#000",
-    fontWeight: "500",
+    color: "#13a1a8",
+    fontWeight: "600",
     fontSize: 18,
     textAlign: "center",
   },

@@ -31,7 +31,13 @@ export default function App() {
       <Stack.Navigator screenOptions={styles.screenOptions}>
         <Stack.Screen name="Get started" component={getStaretedScreen} />
         <Stack.Screen name="Home" component={HomeScreen} />
-        <Stack.Screen name="Register" component={registerScreen} />
+        <Stack.Screen
+          name="Register"
+          component={registerScreen}
+          options={{
+            cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+          }}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );

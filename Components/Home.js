@@ -4,12 +4,42 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { StatusBar } from "expo-status-bar";
 import { Ionicons } from "@expo/vector-icons";
 import { Entypo } from "@expo/vector-icons";
-import MapView, { PROVIDER_GOOGLE } from "react-native-maps";
+import MapView, { PROVIDER_GOOGLE, Marker, Polyline } from "react-native-maps";
+
 import { Button, BottomSheet, Chip, Header } from "@rneui/base";
 const Home = ({ toReg }) => {
   const [userData, setUserData] = useState(null);
   const [showMap, setShowMap] = useState(false);
 
+  const [markers, setMarkers] = useState([]);
+  const [area, setArea] = useState(null);
+  const [values, setValues] = useState([]);
+
+  //Mark the map
+  const handleMapPress = (event) => {
+    const { coordinate } = event.nativeEvent;
+    const value = [coordinate.latitude, coordinate.longitude];
+
+    let newValues = [...values, value];
+    const newMarkers = [...markers, coordinate];
+    setMarkers(newMarkers);
+    //markers.length >= 2 && setMarkers([...markers, markers[0]]);
+    setValues(newValues);
+
+    if (newMarkers.length >= 4) {
+      const turf = require("@turf/turf");
+      // first value = last value
+      let lastValue = newValues[0];
+      newValues.push(lastValue);
+      var polygon = turf.polygon([newValues]);
+      const areaInSquareMeters = turf.area(polygon);
+      console.log(areaInSquareMeters);
+      setArea(areaInSquareMeters);
+    }
+  };
+  // const polylineCoordinates = () => {
+  //    // add first marker as last coordinate
+  // };
   const showingMap = () => {
     setShowMap(!showMap);
   };
@@ -36,6 +66,7 @@ const Home = ({ toReg }) => {
       <StatusBar backgroundColor="#ff5349" style="light" />
       <Header
         backgroundColor="#ff5349"
+        containerStyle={{ height: 300 }}
         centerComponent={
           <View>
             <Text style={{ color: "#fff", fontWeight: "900", fontSize: 20 }}>
@@ -71,6 +102,7 @@ const Home = ({ toReg }) => {
             onPress={showingMap}
           >
             <Ionicons name="ios-add-circle" size={80} color="#ff5349" />
+
             <Text style={{ fontSize: 18, fontWeight: "800", color: "#ff5349" }}>
               Start mapping
             </Text>
@@ -84,7 +116,7 @@ const Home = ({ toReg }) => {
       >
         <Chip containerStyle={[styles.chip]} buttonStyle={styles.chipBtn}>
           <MapView
-            style={{ width: "110%", height: "80%" }}
+            style={{ width: "110%", height: "100%" }}
             provider={PROVIDER_GOOGLE}
             region={
               userData && {
@@ -94,14 +126,50 @@ const Home = ({ toReg }) => {
                 longitudeDelta: 0.0121,
               }
             }
-          />
+            onPress={handleMapPress}
+            showsUserLocation={true}
+            showsMyLocationButton={true}
+          >
+            {markers.map((marker, index) => (
+              <Marker
+                key={index}
+                coordinate={marker}
+                style={{ backfaceVisibility: "yellow" }}
+              />
+            ))}
+            <Polyline
+              coordinates={markers}
+              strokeColor="#ff5349"
+              strokeWidth={1}
+            />
+          </MapView>
+          {area && (
+            <View
+              style={{
+                position: "relative",
+                top: "-15%",
+                backgroundColor: "#fff",
+                height: 100,
+                alignContent: "center",
+                alignItems: "center",
+                justifyContent: "space-evenly",
+                width: "80%",
+              }}
+            >
+              <Text style={[styles.text]}>
+                Area: {area.toFixed(2)} square meters
+              </Text>
+            </View>
+          )}
+
           <Ionicons
             name="arrow-back-circle"
-            size={50}
+            size={60}
             color="#ff5349"
             onPress={showingMap}
             style={{ position: "relative", top: "-90%", left: "-42%" }}
           />
+          <View></View>
         </Chip>
       </BottomSheet>
     </View>
@@ -116,28 +184,17 @@ const styles = StyleSheet.create({
     backgroundColor: "#F5F5F5",
     alignItems: "center",
     width: "100%",
+    justifyContent: "space-evenly",
   },
   appName: { color: "#fff", fontWeight: "900", fontSize: 28 },
-  area: {
-    width: "95%",
-    backgroundColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center",
-  },
+
   text: {
-    color: "#778899",
-    fontWeight: "600",
-    fontSize: 20,
+    color: "#13a1a8",
+    fontWeight: "500",
+    fontSize: 18,
     textAlign: "center",
   },
-  btnContainer: { height: 55, width: "90%" },
-  btn: {
-    width: "100%",
-    height: "100%",
-    backgroundColor: "#ff5349",
-    borderRadius: 100,
-  },
-  btnTitle: { fontWeight: "700", fontSize: 20 },
+
   boxshadow: {
     shadowColor: "#000",
     shadowOffset: {
