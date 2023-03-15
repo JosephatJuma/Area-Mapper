@@ -4,62 +4,205 @@ import {
   View,
   ScrollView,
   TouchableOpacity,
+  Alert,
+  Image,
+  ActivityIndicator,
 } from "react-native";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { StatusBar } from "expo-status-bar";
-import { Button, Image, Input } from "@rneui/base";
+import { Button, Input, Header, BottomSheet, Chip, Dialog } from "@rneui/base";
 import * as ImagePicker from "expo-image-picker";
+import * as Location from "expo-location";
 import { FontAwesome } from "@expo/vector-icons";
-const Register = () => {
+import { Ionicons } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+const Register = ({ back, toHome }) => {
   const now = new Date();
 
   const [image, setImage] = useState(null);
   const [name, setName] = useState("");
   const [regDate, setRegDate] = useState(now);
+  const [agree, setAgree] = useState(false);
+  const [err, setErrMsg] = useState("");
+  const [location, setlocation] = useState(null);
+  const [showMethods, setShowMethods] = useState(false);
+
+  const consentToRegister = (consent) => {
+    setAgree(consent);
+    if (consent === true) {
+      return;
+    } else if (consent === false) {
+      toHome();
+    }
+  };
+  const selectMethod = () => {
+    setShowMethods(!showMethods);
+  };
 
   const selectImage = async () => {
+    setShowMethods(!showMethods);
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [4, 4],
       quality: 1,
     });
-
-    //console.log(result);
+    if (!result.canceled) {
+      setImage(result.assets[0].uri);
+    }
+  };
+  const takePhotoWithCamera = async () => {
+    setShowMethods(!showMethods);
+    let result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+    });
 
     if (!result.canceled) {
       setImage(result.assets[0].uri);
     }
   };
   const submitForm = () => {
-    setRegDate(now);
-    // console.log(regDate);
-    // console.log(name);
-    // console.log(image);
+    setErrMsg("");
+
+    if (!name) {
+      setErrMsg("Name is required");
+      return;
+    }
+    if (!image) {
+      setErrMsg("Please select Image");
+      return;
+    }
+    const userData = {
+      name: name,
+      image: image,
+      location: location,
+      registrationDate: regDate,
+    };
+    // console.log(userData);
+    try {
+      AsyncStorage.setItem("profile", JSON.stringify(userData));
+      console.log("Data stored successfully!");
+      toHome();
+    } catch (error) {
+      console.log("Error storing data: ", error);
+    }
   };
+
+  //Grant permission to access device location
+
+  const getUserLocation = async () => {
+    let status = await Location.requestForegroundPermissionsAsync();
+    if (status === "denied") {
+      setErrMsg("Area Mapper was denied access to your location");
+      return;
+    }
+    let options = {
+      accurency: Location.Accuracy.High,
+      requiredAccuracy: 10,
+    };
+    let userLocation = Location.getCurrentPositionAsync(options);
+    setlocation((await userLocation).coords);
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar backgroundColor="#ff5349" style="light" />
-      <Text style={styles.text}>
+      <Header
+        backgroundColor="#ff5349"
+        leftComponent={
+          <Ionicons name="arrow-back" size={30} color="#fff" onPress={back} />
+        }
+        centerComponent={
+          <View
+            style={{
+              width: 250,
+              alignContent: "flex-end",
+              alignItems: "flex-end",
+            }}
+          >
+            <Text style={{ color: "#fff", fontSize: 20, fontWeight: "bold" }}>
+              Respondent Registration
+            </Text>
+          </View>
+        }
+      />
+      <Dialog
+        overlayStyle={{
+          backgroundColor: "#fff",
+          height: 260,
+          width: "97%",
+          justifyContent: "space-evenly",
+          alignItems: "center",
+          padding: 0,
+          marginTop: 100,
+        }}
+        backdropStyle={{ backfaceVisibility: "#ff5349" }}
+        isVisible={agree ? !location && true : false}
+        statusBarTranslucent={true}
+      >
+        <Text style={styles.text}>Select this location</Text>
+        {/* <ActivityIndicator size={50} color="#ff5349" /> */}
+        <Ionicons name="ios-location" size={80} color="#ff5349" />
+        <Button
+          onPress={getUserLocation}
+          title="Access this location"
+          containerStyle={[styles.btnContainer, { width: "100%" }]}
+          buttonStyle={[styles.btn, { borderRadius: 0 }]}
+          titleStyle={styles.btnTitle}
+        />
+      </Dialog>
+      {/* <Text style={styles.text}>
         Please Fill the form below with your details
-      </Text>
-      <ScrollView
-        style={styles.form}
-        contentContainerStyle={styles.cointerScrollStyle}
+      </Text> */}
+
+      <View
+        style={{
+          backgroundColor: "#ff5349",
+          width: "100%",
+          alignItems: "center",
+          height: 200,
+          justifyContent: "center",
+          borderBottomRightRadius: 40,
+          borderBottomLeftRadius: 40,
+        }}
       >
         <TouchableOpacity
-          onPress={selectImage}
+          onPress={selectMethod}
           style={[styles.boxShadow, styles.imagePicker]}
         >
           {image ? (
             <Image
               source={{ uri: image }}
-              style={{ width: 150, height: 110, borderRadius: 20 }}
+              style={{ width: 150, height: 150, borderRadius: 100 }}
             />
           ) : (
-            <Text>Select Image</Text>
+            <MaterialCommunityIcons
+              name="folder-image"
+              size={100}
+              color="#ff5349"
+            />
           )}
         </TouchableOpacity>
+      </View>
+
+      <ScrollView
+        style={styles.form}
+        contentContainerStyle={styles.cointerScrollStyle}
+      >
+        {err && (
+          <Chip
+            title={err}
+            type="outline"
+            containerStyle={{
+              marginVertical: 15,
+              width: "80%",
+            }}
+            icon={<FontAwesome name="times" color="red" size={20} />}
+            titleStyle={{ color: "red" }}
+            buttonStyle={{ borderColor: "red" }}
+          />
+        )}
         <Input
           placeholder="Full Name"
           inputContainerStyle={styles.inputContainer}
@@ -78,6 +221,62 @@ const Register = () => {
           onPress={submitForm}
         />
       </ScrollView>
+      <BottomSheet
+        isVisible={!agree}
+        containerStyle={{ backgroundColor: "#ff5349c0" }}
+      >
+        <Chip containerStyle={styles.chip} buttonStyle={styles.chipBtn}>
+          <Text style={styles.text}>
+            Do you consent to be registered on our program?
+          </Text>
+          <View style={{ flexDirection: "row", width: "80%" }}>
+            <Button
+              title="Yes"
+              containerStyle={styles.alertBtnContainer}
+              buttonStyle={styles.alertBtn}
+              onPress={() => consentToRegister(true)}
+            />
+            <Button
+              title="No"
+              containerStyle={styles.alertBtnContainer}
+              buttonStyle={styles.alertBtn}
+              onPress={() => consentToRegister(false)}
+            />
+          </View>
+        </Chip>
+      </BottomSheet>
+      <BottomSheet
+        isVisible={showMethods}
+        onBackdropPress={selectMethod}
+        containerStyle={{ backgroundColor: "#ff5349c0" }}
+      >
+        <Chip containerStyle={[styles.chip]} buttonStyle={styles.chipBtn}>
+          <Text style={styles.text}> Uplaad profile image</Text>
+          <View style={{ flexDirection: "row", width: "80%" }}>
+            <View>
+              <TouchableOpacity
+                style={styles.select}
+                onPress={takePhotoWithCamera}
+              >
+                <Ionicons name="camera" size={40} color="#ff5349" />
+              </TouchableOpacity>
+              <Text style={styles.text}>Camera</Text>
+            </View>
+            <View>
+              <TouchableOpacity style={styles.select} onPress={selectImage}>
+                <Ionicons name="md-image" size={40} color="#ff5349" />
+              </TouchableOpacity>
+              <Text style={styles.text}>Gallery</Text>
+            </View>
+            <View>
+              <TouchableOpacity style={styles.select} onPress={selectMethod}>
+                <Ionicons name="md-close-circle" size={40} color="#ff5349" />
+              </TouchableOpacity>
+              <Text style={styles.text}>Cancel</Text>
+            </View>
+          </View>
+        </Chip>
+      </BottomSheet>
     </View>
   );
 };
@@ -91,8 +290,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     width: "100%",
     justifyContent: "space-evenly",
-    height: 1000,
-    marginTop: 100,
   },
   cointerScrollStyle: {
     alignItems: "center",
@@ -117,27 +314,27 @@ const styles = StyleSheet.create({
   },
 
   text: {
-    color: "#778899",
-    fontWeight: "600",
-    fontSize: 20,
+    color: "#000",
+    fontWeight: "500",
+    fontSize: 18,
     textAlign: "center",
   },
-  btnContainer: { height: 60, width: "90%" },
+  btnContainer: { height: 50, width: "90%" },
   btn: {
     width: "100%",
     height: "100%",
     backgroundColor: "#ff5349",
-    borderRadius: 100,
+    borderRadius: 10,
   },
   btnTitle: { fontWeight: "700", fontSize: 20 },
   imagePicker: {
-    height: 120,
-    width: "45%",
-    borderRadius: 20,
+    height: 150,
+    width: 150,
+    borderRadius: 100,
     alignContent: "center",
     alignItems: "center",
     justifyContent: "space-evenly",
-    borderWidth: 10,
+    borderWidth: 0.5,
     margin: 10,
     borderColor: "#ff5349",
     backgroundColor: "#fff",
@@ -151,5 +348,44 @@ const styles = StyleSheet.create({
     shadowOpacity: 1,
     shadowRadius: 8,
     elevation: 7,
+  },
+  alertBtnContainer: {
+    width: "50%",
+    height: 55,
+    borderRadius: 0,
+  },
+  alertBtn: {
+    backgroundColor: "#ff5349",
+    borderRadius: 0,
+    height: "100%",
+    margin: 2,
+  },
+  chip: {
+    backgroundColor: "#fff",
+    minHeight: 250,
+    // borderTopLeftRadius: 10,
+    // borderTopRightRadius: 10,
+    borderRadius: 0,
+  },
+  chipBtn: {
+    backgroundColor: "#fff",
+    height: "100%",
+    flexDirection: "column",
+    justifyContent: "space-evenly",
+    alignSelf: "center",
+    borderRadius: 0,
+    width: "100%",
+  },
+  select: {
+    backgroundColor: "#fff",
+    width: 60,
+    height: 60,
+    justifyContent: "space-evenly",
+    alignContent: "center",
+    alignItems: "center",
+    borderRadius: 100,
+    margin: 15,
+    borderWidth: 0.5,
+    borderColor: "#ff5349",
   },
 });

@@ -18,7 +18,13 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow this app to access you and pick images"
+          "photosPermission": "Allow Area-Mapper to access you and pick images"
+        }
+       
+      ],[
+         "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow Area-Mapper to use your location."
         }
       ]
     ],

@@ -2,6 +2,8 @@ import { StyleSheet, Text, View } from "react-native";
 import GetStarted from "./Components/GetStarted";
 import Home from "./Components/Home";
 import Register from "./auth/Register";
+import { enableLatestRenderer } from "react-native-maps";
+
 import { useNavigation, NavigationContainer } from "@react-navigation/native";
 import {
   createStackNavigator,
@@ -10,16 +12,20 @@ import {
 export default function App() {
   const getStaretedScreen = () => {
     const nav = useNavigation();
-    return <GetStarted toConset={() => nav.navigate("Home")} />;
+    return <GetStarted toConset={() => nav.navigate("Register")} />;
   };
   const HomeScreen = () => {
     const nav = useNavigation();
     return <Home toReg={() => nav.navigate("Register")} />;
   };
   const registerScreen = () => {
-    return <Register />;
+    const nav = useNavigation();
+    return (
+      <Register back={() => nav.goBack()} toHome={() => nav.navigate("Home")} />
+    );
   };
   const Stack = createStackNavigator();
+  enableLatestRenderer();
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={styles.screenOptions}>
@@ -36,6 +42,6 @@ const styles = StyleSheet.create({
     headerShown: false,
     gestureEnabled: true,
     gestureDirection: "horizontal",
-    cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+    cardStyleInterpolator: CardStyleInterpolators.forRevealFromBottomAndroid,
   },
 });

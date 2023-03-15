@@ -38,7 +38,7 @@ const styles = StyleSheet.create({
     width: "100%",
     justifyContent: "space-evenly",
   },
-  image: { width: 300, height: 300 },
+  image: { width: 250, height: 250 },
   textArea: { alignContent: "center", alignItems: "center" },
   welcome: { color: "#ff5349", fontWeight: "bold", fontSize: 30 },
   text: {
