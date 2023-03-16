@@ -17,7 +17,6 @@ export default function App() {
   const getData = async () => {
     if (userData === null) {
       try {
-        await AsyncStorage.deleteItem("profile");
         const result = await AsyncStorage.getItem("profile");
         if (result !== null) {
           const data = JSON.parse(result);
@@ -25,7 +24,7 @@ export default function App() {
           setSignedIn(true);
         }
       } catch (error) {
-        console.log("Error retrieving data: ", error);
+        setUserData(null);
       }
     }
   };

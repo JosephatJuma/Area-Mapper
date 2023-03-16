@@ -38,6 +38,7 @@ const Home = () => {
         const result = await AsyncStorage.getItem("profile");
         if (result !== null) {
           const data = JSON.parse(result);
+
           setUserData(data);
         } else {
           setUserData(null);
