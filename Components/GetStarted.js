@@ -13,7 +13,7 @@ const GetStarted = ({ toConset }) => {
       <View style={styles.textArea}>
         <Text style={styles.welcome}>Welcome</Text>
         <Text style={styles.text}>
-          Please take some time to set up an account to get started
+          Map the area of the compound using this app
         </Text>
       </View>
       <Button

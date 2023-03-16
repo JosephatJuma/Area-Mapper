@@ -39,7 +39,7 @@ const Register = ({ back, toHome }) => {
   const selectMethod = () => {
     setShowMethods(!showMethods);
   };
-
+  //Select image from upload
   const selectImage = async () => {
     setShowMethods(!showMethods);
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -52,19 +52,18 @@ const Register = ({ back, toHome }) => {
       setImage(result.assets[0].uri);
     }
   };
+  //Select from camera
   const takePhotoWithCamera = async () => {
     setShowMethods(!showMethods);
     let result = await ImagePicker.launchCameraAsync({
       allowsEditing: true,
     });
-
     if (!result.canceled) {
       setImage(result.assets[0].uri);
     }
   };
   const submitForm = () => {
     setErrMsg("");
-
     if (!name) {
       setErrMsg("Name is required");
       return;
@@ -73,36 +72,34 @@ const Register = ({ back, toHome }) => {
       setErrMsg("Please select Image");
       return;
     }
-    const userData = {
+    const regData = {
       name: name,
       image: image,
       location: location,
       registrationDate: regDate,
     };
-    // console.log(userData);
     try {
-      AsyncStorage.setItem("profile", JSON.stringify(userData));
-      console.log("Data stored successfully!");
+      AsyncStorage.setItem("profile", JSON.stringify(regData));
       toHome();
     } catch (error) {
-      console.log("Error storing data: ", error);
+      Alert.alert("Error", "Failed, please try again");
     }
   };
 
   //Grant permission to access device location
-
   const getUserLocation = async () => {
     let status = await Location.requestForegroundPermissionsAsync();
     if (status === "denied") {
       setErrMsg("Area Mapper was denied access to your location");
       return;
     }
-    let options = {
-      accurency: Location.Accuracy.High,
-      requiredAccuracy: 10,
-    };
-    let userLocation = Location.getCurrentPositionAsync(options);
-    setlocation((await userLocation).coords);
+
+    let userLocation = await Location.getCurrentPositionAsync({
+      accuracy: Location.Accuracy.Highest,
+      maximumAge: 5000, // Accept cached location that is no older than 5 seconds
+      timeout: 10000, // Stop trying to get location after 10 seconds
+    });
+    setlocation(userLocation.coords);
   };
 
   return (

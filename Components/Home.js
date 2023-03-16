@@ -1,48 +1,37 @@
-import { StyleSheet, Text, View, Image, TouchableOpacity } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  View,
+  Image,
+  TouchableOpacity,
+  Alert,
+} from "react-native";
 import React, { useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { StatusBar } from "expo-status-bar";
 import { Ionicons } from "@expo/vector-icons";
 import { Entypo } from "@expo/vector-icons";
+import { Feather } from "@expo/vector-icons";
 import MapView, { PROVIDER_GOOGLE, Marker, Polyline } from "react-native-maps";
-
-import { Button, BottomSheet, Chip, Header } from "@rneui/base";
-const Home = ({ toReg }) => {
+import * as turf from "@turf/turf";
+import { Button, BottomSheet, Chip, Header, Dialog, Input } from "@rneui/base";
+const Home = () => {
   const [userData, setUserData] = useState(null);
   const [showMap, setShowMap] = useState(false);
-
+  const [showArea, setShowArea] = useState(false);
   const [markers, setMarkers] = useState([]);
   const [area, setArea] = useState(null);
-  const [values, setValues] = useState([]);
-
+  const [comment, setComment] = useState("");
   //Mark the map
   const handleMapPress = (event) => {
     const { coordinate } = event.nativeEvent;
-    const value = [coordinate.latitude, coordinate.longitude];
-
-    let newValues = [...values, value];
-    const newMarkers = [...markers, coordinate];
-    setMarkers(newMarkers);
-    //markers.length >= 2 && setMarkers([...markers, markers[0]]);
-    setValues(newValues);
-
-    if (newMarkers.length >= 4) {
-      const turf = require("@turf/turf");
-      // first value = last value
-      let lastValue = newValues[0];
-      newValues.push(lastValue);
-      var polygon = turf.polygon([newValues]);
-      const areaInSquareMeters = turf.area(polygon);
-      console.log(areaInSquareMeters);
-      setArea(areaInSquareMeters);
-    }
+    setMarkers((previousMarkers) => [...previousMarkers, coordinate]);
   };
-  // const polylineCoordinates = () => {
-  //    // add first marker as last coordinate
-  // };
-  const showingMap = () => {
-    setShowMap(!showMap);
-  };
+
+  const reset = () => setMarkers([]); //reset the mark poins
+  const showingMap = () => setShowMap(!showMap); //show/hide map
+  const showingArea = () => setShowArea(!showArea); //sho/hide the dialogue for results
+
   const getData = async () => {
     if (userData === null) {
       try {
@@ -51,16 +40,48 @@ const Home = ({ toReg }) => {
           const data = JSON.parse(result);
           setUserData(data);
         } else {
-          console.log("No data found!");
+          setUserData(null);
         }
       } catch (error) {
-        console.log("Error retrieving data: ", error);
+        return;
       }
     }
   };
   useEffect(() => {
     getData();
-  }, [userData]);
+  }, []);
+
+  //Compute Area when the points are 3 or more
+  useEffect(() => {
+    if (markers.length >= 3) {
+      let array = markers.map((obj) => Object.values(obj));
+      let lastValue = array[0]; // last value = first value to close the polygon
+      array.push(lastValue);
+      var polygon = turf.polygon([array]);
+      const areaInSquareMeters = turf.area(polygon);
+      setArea(areaInSquareMeters);
+    }
+  }, [markers]);
+
+  //submit area results of the computation
+  const submitResult = () => {
+    const result = {
+      id: Math.floor(Math.random() * 90000) + 10000,
+      comment: comment,
+      coordinates: markers,
+      area: area,
+    };
+    try {
+      AsyncStorage.setItem("profile", JSON.stringify(result));
+      Alert.alert("Succeeded", "Data stored successfully!");
+      showingArea();
+      setComment("");
+      setArea(null);
+      setMarkers([]);
+    } catch (error) {
+      Alert.alert("Failed", "Error storing data, try again");
+    }
+  };
   return (
     <View style={styles.container}>
       <StatusBar backgroundColor="#ff5349" style="light" />
@@ -81,6 +102,39 @@ const Home = ({ toReg }) => {
       <View
         style={{ width: "100%", alignContent: "center", alignItems: "center" }}
       >
+        <Dialog
+          isVisible={showArea}
+          overlayStyle={styles.dialoge}
+          onBackdropPress={showingArea}
+          backdropStyle={{ backgroundColor: "#000000c0" }}
+        >
+          <Feather
+            name="delete"
+            size={30}
+            color="#13a1a8"
+            style={{ alignSelf: "flex-end" }}
+            onPress={showingArea}
+          />
+          <View style={styles.inputCont}>
+            <Text style={styles.text}>
+              Area: {area !== null && area.toFixed(2)} square meters
+            </Text>
+          </View>
+          <Input
+            placeholder="Add comment (Optional)"
+            containerStyle={styles.inputCont}
+            style={styles.input}
+            inputContainerStyle={{ borderBottomWidth: 0 }}
+            multiline={true}
+            onChangeText={setComment}
+          />
+          <Button
+            onPress={submitResult}
+            containerStyle={{ height: 50 }}
+            buttonStyle={styles.btn}
+            title="Save"
+          />
+        </Dialog>
         {userData !== null && (
           <Image
             source={{ uri: userData.image }}
@@ -102,7 +156,6 @@ const Home = ({ toReg }) => {
             onPress={showingMap}
           >
             <Ionicons name="ios-add-circle" size={80} color="#ff5349" />
-
             <Text style={{ fontSize: 18, fontWeight: "800", color: "#ff5349" }}>
               Start mapping
             </Text>
@@ -118,17 +171,17 @@ const Home = ({ toReg }) => {
           <MapView
             style={{ width: "110%", height: "100%" }}
             provider={PROVIDER_GOOGLE}
+            onPress={handleMapPress}
+            showsUserLocation={true}
+            showsMyLocationButton={true}
             region={
-              userData && {
+              userData !== null && {
                 latitude: userData.location.latitude,
                 longitude: userData.location.longitude,
                 latitudeDelta: 0.015,
                 longitudeDelta: 0.0121,
               }
             }
-            onPress={handleMapPress}
-            showsUserLocation={true}
-            showsMyLocationButton={true}
           >
             {markers.map((marker, index) => (
               <Marker
@@ -143,25 +196,32 @@ const Home = ({ toReg }) => {
               strokeWidth={1}
             />
           </MapView>
-          {area && (
+          {markers.length >= 3 && (
             <View
               style={{
                 position: "relative",
-                top: "-15%",
-                backgroundColor: "#fff",
-                height: 100,
-                alignContent: "center",
-                alignItems: "center",
+                top: "-40%",
+                left: "0%",
+                width: "100%",
+                height: 50,
                 justifyContent: "space-evenly",
-                width: "80%",
+                flexDirection: "row",
               }}
             >
-              <Text style={[styles.text]}>
-                Area: {area.toFixed(2)} square meters
-              </Text>
+              <Button
+                onPress={showingArea}
+                title="Compute area"
+                containerStyle={styles.btnContainer}
+                buttonStyle={styles.btn}
+              />
+              <Button
+                onPress={reset}
+                title="Restart"
+                containerStyle={styles.btnContainer}
+                buttonStyle={styles.btn}
+              />
             </View>
           )}
-
           <Ionicons
             name="arrow-back-circle"
             size={60}
@@ -190,7 +250,7 @@ const styles = StyleSheet.create({
 
   text: {
     color: "#13a1a8",
-    fontWeight: "500",
+    fontWeight: "600",
     fontSize: 18,
     textAlign: "center",
   },
@@ -215,14 +275,14 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 0,
     borderTopLeftRadius: 0,
     borderWidth: 0,
-    borderColor: "lightgrey",
+    borderColor: "#13a1a8",
     justifyContent: "space-evenly",
   },
   option: {
     width: "100%",
     borderBottomWidth: 1,
     height: 80,
-    borderColor: "lightgrey",
+    borderColor: "#13a1a8",
     padding: 10,
     display: "flex",
     flexDirection: "row",
@@ -246,5 +306,33 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     borderRadius: 0,
     width: "100%",
+  },
+  btnContainer: {
+    width: "48%",
+  },
+  btn: { backgroundColor: "#ff5349", height: "100%" },
+  inputCont: {
+    width: "100%",
+    alignContent: "center",
+    alignItems: "center",
+    maxHeight: 200,
+    marginBottom: 10,
+    marginRight: 5,
+    backgroundColor: "#F5F5F5",
+    borderRadius: 10,
+    borderColor: "grey",
+    borderWidth: 0.5,
+    minHeight: 50,
+  },
+  input: {
+    color: "#13a1a8",
+    fontSize: 18,
+    fontWeight: "600",
+  },
+  dialoge: {
+    backgroundColor: "#fff",
+    width: "98%",
+    minHeight: "40%",
+    borderRadius: 30,
   },
 });
