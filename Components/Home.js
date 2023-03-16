@@ -127,6 +127,7 @@ const Home = () => {
             style={styles.input}
             inputContainerStyle={{ borderBottomWidth: 0 }}
             multiline={true}
+            value={comment}
             onChangeText={setComment}
           />
           <Button
@@ -176,12 +177,19 @@ const Home = () => {
             showsUserLocation={true}
             showsMyLocationButton={true}
             region={
-              userData !== null && {
-                latitude: userData.location.latitude,
-                longitude: userData.location.longitude,
-                latitudeDelta: 0.015,
-                longitudeDelta: 0.0121,
-              }
+              userData && userData.location
+                ? {
+                    latitude: userData.location.latitude,
+                    longitude: userData.location.longitude,
+                    latitudeDelta: 0.015,
+                    longitudeDelta: 0.0121,
+                  }
+                : {
+                    latitude: 0.3476,
+                    longitude: 32.5825,
+                    latitudeDelta: 0.015,
+                    longitudeDelta: 0.0121,
+                  }
             }
           >
             {markers.map((marker, index) => (
