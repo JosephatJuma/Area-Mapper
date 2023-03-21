@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Alert,
 } from "react-native";
+import { Button, BottomSheet, Chip, Header, Dialog, Input } from "@rneui/base";
 import React, { useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { StatusBar } from "expo-status-bar";
@@ -14,7 +15,7 @@ import { Entypo } from "@expo/vector-icons";
 import { Feather } from "@expo/vector-icons";
 import MapView, { PROVIDER_GOOGLE, Marker, Polyline } from "react-native-maps";
 import * as turf from "@turf/turf";
-import { Button, BottomSheet, Chip, Header, Dialog, Input } from "@rneui/base";
+
 const Home = () => {
   const [userData, setUserData] = useState(null);
   const [showMap, setShowMap] = useState(false);
@@ -22,32 +23,23 @@ const Home = () => {
   const [markers, setMarkers] = useState([]);
   const [area, setArea] = useState(null);
   const [comment, setComment] = useState("");
+
   //Mark the map
   const handleMapPress = (event) => {
     const { coordinate } = event.nativeEvent;
     setMarkers((previousMarkers) => [...previousMarkers, coordinate]);
   };
-
   const reset = () => setMarkers([]); //reset the mark poins
   const showingMap = () => setShowMap(!showMap); //show/hide map
   const showingArea = () => setShowArea(!showArea); //sho/hide the dialogue for results
 
   const getData = async () => {
-    if (userData === null) {
-      try {
-        const result = await AsyncStorage.getItem("profile");
-        if (result !== null) {
-          const data = JSON.parse(result);
-
-          setUserData(data);
-        } else {
-          setUserData(null);
-        }
-      } catch (error) {
-        return;
-      }
-    }
-  };
+    //await AsyncStorage.removeItem("profile");
+    await AsyncStorage.getItem("profile").then((result) => {
+      const data = JSON.parse(result);
+      setUserData(data);
+    });
+  }; //Fetching data
   useEffect(() => {
     getData();
   }, []);
@@ -64,24 +56,21 @@ const Home = () => {
     }
   }, [markers]);
 
-  //submit area results of the computation
+  //submit area results
   const submitResult = () => {
-    const result = {
-      id: Math.floor(Math.random() * 90000) + 10000,
-      comment: comment,
-      coordinates: markers,
-      area: area,
-    };
-    try {
-      AsyncStorage.setItem("profile", JSON.stringify(result));
-      Alert.alert("Succeeded", "Data stored successfully!");
-      showingArea();
-      setComment("");
-      setArea(null);
-      setMarkers([]);
-    } catch (error) {
-      Alert.alert("Failed", "Error storing data, try again");
-    }
+    const id = Math.floor(Math.random() * 90000) + 10000;
+    const result = { id: id, comment: comment, coords: markers, area: area };
+    AsyncStorage.setItem("profile", JSON.stringify(result))
+      .then(() => {
+        Alert.alert("Succeeded", "Data stored successfully!");
+        showingArea();
+        setComment("");
+        setArea(null);
+        setMarkers([]);
+      })
+      .catch((err) => {
+        Alert.alert(err.message);
+      });
   };
   return (
     <View style={styles.container}>
@@ -94,7 +83,7 @@ const Home = () => {
             <Text style={{ color: "#fff", fontWeight: "900", fontSize: 20 }}>
               Hi <Entypo name="hand" size={24} color="#fff" />
             </Text>
-            <Text style={styles.appName}>
+            <Text style={styles.name}>
               {userData !== null && userData.name}
             </Text>
           </View>
@@ -107,7 +96,9 @@ const Home = () => {
           isVisible={showArea}
           overlayStyle={styles.dialoge}
           onBackdropPress={showingArea}
-          backdropStyle={{ backgroundColor: "#000000c0" }}
+          backdropStyle={{
+            backgroundColor: "#000000c0",
+          }}
         >
           <Feather
             name="delete"
@@ -138,18 +129,7 @@ const Home = () => {
           />
         </Dialog>
         {userData !== null && (
-          <Image
-            source={{ uri: userData.image }}
-            style={[
-              {
-                width: 150,
-                height: 150,
-                borderRadius: 100,
-                borderWidth: 2,
-                borderColor: "#ff5349",
-              },
-            ]}
-          />
+          <Image source={{ uri: userData.image }} style={[styles.image]} />
         )}
 
         <View style={[styles.options]}>
@@ -187,36 +167,22 @@ const Home = () => {
                 : {
                     latitude: 0.3476,
                     longitude: 32.5825,
-                    latitudeDelta: 0.015,
-                    longitudeDelta: 0.0121,
+                    latitudeDelta: 0.01,
+                    longitudeDelta: 0.01,
                   }
             }
           >
             {markers.map((marker, index) => (
-              <Marker
-                key={index}
-                coordinate={marker}
-                style={{ backfaceVisibility: "yellow" }}
-              />
+              <Marker key={index} coordinate={marker} />
             ))}
             <Polyline
               coordinates={markers}
-              strokeColor="#ff5349"
+              strokeColor="#13a1a8"
               strokeWidth={1}
             />
           </MapView>
           {markers.length >= 3 && (
-            <View
-              style={{
-                position: "relative",
-                top: "-40%",
-                left: "0%",
-                width: "100%",
-                height: 50,
-                justifyContent: "space-evenly",
-                flexDirection: "row",
-              }}
-            >
+            <View style={styles.btnArea}>
               <Button
                 onPress={showingArea}
                 title="Compute area"
@@ -233,10 +199,10 @@ const Home = () => {
           )}
           <Ionicons
             name="arrow-back-circle"
-            size={60}
+            size={50}
             color="#ff5349"
             onPress={showingMap}
-            style={{ position: "relative", top: "-90%", left: "-42%" }}
+            style={{ position: "relative", top: "-95%", left: "-42%" }}
           />
           <View></View>
         </Chip>
@@ -255,15 +221,13 @@ const styles = StyleSheet.create({
     width: "100%",
     justifyContent: "space-evenly",
   },
-  appName: { color: "#fff", fontWeight: "900", fontSize: 28 },
-
+  name: { color: "#fff", fontWeight: "900", fontSize: 28 },
   text: {
     color: "#13a1a8",
     fontWeight: "600",
     fontSize: 18,
     textAlign: "center",
   },
-
   boxshadow: {
     shadowColor: "#000",
     shadowOffset: {
@@ -275,32 +239,15 @@ const styles = StyleSheet.create({
     elevation: 7,
   },
   options: {
-    backgroundColor: "#F5F5F5",
-    width: "96%",
     height: 350,
     alignContent: "center",
     alignItems: "center",
-    borderRadius: 25,
-    borderTopRightRadius: 0,
-    borderTopLeftRadius: 0,
-    borderWidth: 0,
     borderColor: "#13a1a8",
     justifyContent: "space-evenly",
-  },
-  option: {
-    width: "100%",
-    borderBottomWidth: 1,
-    height: 80,
-    borderColor: "#13a1a8",
-    padding: 10,
-    display: "flex",
-    flexDirection: "row",
-    justifyContent: "space-between",
   },
   chip: {
     backgroundColor: "#fff",
     minHeight: 800,
-
     width: "100%",
     borderRadius: 0,
     padding: 0,
@@ -316,32 +263,30 @@ const styles = StyleSheet.create({
     borderRadius: 0,
     width: "100%",
   },
-  btnContainer: {
-    width: "48%",
-  },
+  btnContainer: { width: "48%" },
   btn: { backgroundColor: "#ff5349", height: "100%" },
   inputCont: {
     width: "100%",
-    alignContent: "center",
-    alignItems: "center",
     maxHeight: 200,
-    marginBottom: 10,
+    marginBottom: 20,
     marginRight: 5,
     backgroundColor: "#F5F5F5",
     borderRadius: 10,
     borderColor: "grey",
     borderWidth: 0.5,
     minHeight: 50,
+    justifyContent: "space-evenly",
   },
-  input: {
-    color: "#13a1a8",
-    fontSize: 18,
-    fontWeight: "600",
+  input: { color: "#13a1a8", fontSize: 18, fontWeight: "600" },
+  dialoge: { backgroundColor: "#fff", width: "96%", minHeight: "40%" },
+  btnArea: {
+    position: "relative",
+    top: "-40%",
+    left: "0%",
+    width: "100%",
+    height: 50,
+    justifyContent: "space-evenly",
+    flexDirection: "row",
   },
-  dialoge: {
-    backgroundColor: "#fff",
-    width: "98%",
-    minHeight: "40%",
-    borderRadius: 30,
-  },
+  image: { width: 150, height: 150, borderRadius: 100 },
 });

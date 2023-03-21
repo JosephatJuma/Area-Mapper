@@ -1,7 +1,5 @@
-import { StyleSheet } from "react-native";
+import React from "react";
 import GetStarted from "./Components/GetStarted";
-import { useState, useEffect } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import Home from "./Components/Home";
 import Register from "./auth/Register";
 import { enableLatestRenderer } from "react-native-maps";
@@ -11,29 +9,15 @@ import {
   CardStyleInterpolators,
 } from "@react-navigation/stack";
 export default function App() {
-  const [userData, setUserData] = useState(null);
-  const [signedIn, setSignedIn] = useState(false);
-
-  const getData = async () => {
-    if (userData === null) {
-      try {
-        const result = await AsyncStorage.getItem("profile");
-        if (result !== null) {
-          const data = JSON.parse(result);
-          setUserData(data);
-          setSignedIn(true);
-        }
-      } catch (error) {
-        setUserData(null);
-      }
-    }
-  };
-  useEffect(() => {
-    getData();
-  }, []);
   const getStaretedScreen = () => {
     const nav = useNavigation();
-    return <GetStarted toConset={() => nav.navigate("Register")} />;
+    const toHome = () => {
+      return nav.navigate("Home");
+    };
+    const toReg = () => {
+      return nav.navigate("Register");
+    };
+    return <GetStarted toReg={toReg} toHome={toHome} />;
   };
   const HomeScreen = () => {
     const nav = useNavigation();
@@ -49,7 +33,14 @@ export default function App() {
   enableLatestRenderer();
   return (
     <NavigationContainer>
-      <Stack.Navigator screenOptions={styles.screenOptions}>
+      <Stack.Navigator
+        screenOptions={{
+          headerShown: false,
+          gestureEnabled: true,
+          gestureDirection: "horizontal",
+          cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+        }}
+      >
         <Stack.Screen name="Get started" component={getStaretedScreen} />
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen
@@ -63,12 +54,3 @@ export default function App() {
     </NavigationContainer>
   );
 }
-
-const styles = StyleSheet.create({
-  screenOptions: {
-    headerShown: false,
-    gestureEnabled: true,
-    gestureDirection: "horizontal",
-    cardStyleInterpolator: CardStyleInterpolators.forRevealFromBottomAndroid,
-  },
-});

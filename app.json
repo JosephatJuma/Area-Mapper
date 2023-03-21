@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Area-Mapper",
+    "name": "Area Mapper",
     "slug": "Area-Mapper",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -20,11 +20,11 @@
         {
           "photosPermission": "Allow Area-Mapper to access you and pick images"
         }
-       
-      ],[
-         "expo-location",
+      ],
+      [
+        "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Allow Area-Mapper to use your location."
+          "locationAlwaysAndWhenInUsePermission": "Allow Area-Mapper to use device location."
         }
       ]
     ],
@@ -35,10 +35,23 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.josephat.areamapper",
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.FOREGROUND_SERVICE"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "f4b1441b-b48c-4277-a02d-9d8405578af5"
+      }
+    },
+    "owner": "josephat"
   }
 }

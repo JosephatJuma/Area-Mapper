@@ -1,8 +1,21 @@
 import { StyleSheet, Text, View } from "react-native";
-import React from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import React, { useState, useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
 import { Button, Image } from "@rneui/base";
-const GetStarted = ({ toConset }) => {
+
+const GetStarted = ({ toReg, toHome }) => {
+  const [userData, setUserData] = useState(null);
+  const getData = async () => {
+    //await AsyncStorage.removeItem("profile");
+    await AsyncStorage.getItem("profile").then((result) => {
+      const data = JSON.parse(result);
+      setUserData(data);
+    });
+  };
+  useEffect(() => {
+    getData();
+  }, []);
   return (
     <View style={styles.container}>
       <StatusBar backgroundColor="#ff5349" style="light" />
@@ -17,7 +30,7 @@ const GetStarted = ({ toConset }) => {
         </Text>
       </View>
       <Button
-        onPress={toConset}
+        onPress={userData === null ? toReg : toHome}
         title="Get started"
         containerStyle={styles.btnContainer}
         buttonStyle={styles.btn}
@@ -28,7 +41,6 @@ const GetStarted = ({ toConset }) => {
 };
 
 export default GetStarted;
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,

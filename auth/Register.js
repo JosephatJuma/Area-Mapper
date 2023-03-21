@@ -27,7 +27,8 @@ const Register = ({ back, toHome }) => {
   const [err, setErrMsg] = useState("");
   const [location, setlocation] = useState(null);
   const [showMethods, setShowMethods] = useState(false);
-
+  const [loading, setLoading] = useState(false);
+  const [btnTit, setButtonTit] = useState("Access this location");
   const consentToRegister = (consent) => {
     setAgree(consent);
     if (consent === true) {
@@ -88,18 +89,24 @@ const Register = ({ back, toHome }) => {
 
   //Grant permission to access device location
   const getUserLocation = async () => {
+    setLoading(true);
     let status = await Location.requestForegroundPermissionsAsync();
     if (status === "denied") {
       setErrMsg("Area Mapper was denied access to your location");
+      setLoading(false);
       return;
     }
-
     let userLocation = await Location.getCurrentPositionAsync({
       accuracy: Location.Accuracy.Highest,
-      maximumAge: 5000, // Accept cached location that is no older than 5 seconds
-      timeout: 10000, // Stop trying to get location after 10 seconds
+      maximumAge: 5000,
+      timeout: 10000,
     });
     setlocation(userLocation.coords);
+    if (userLocation) {
+      setLoading(false);
+    } else {
+      setButtonTit("Retry");
+    }
   };
 
   return (
@@ -139,20 +146,16 @@ const Register = ({ back, toHome }) => {
         statusBarTranslucent={true}
       >
         <Text style={styles.text}>Select this location</Text>
-        {/* <ActivityIndicator size={50} color="#ff5349" /> */}
-        <Ionicons name="ios-location" size={80} color="#ff5349" />
+        {loading && <ActivityIndicator size={50} color="#ff5349" />}
+        <Ionicons name="ios-location" size={50} color="#ff5349" />
         <Button
           onPress={getUserLocation}
-          title="Access this location"
+          title={btnTit}
           containerStyle={[styles.btnContainer, { width: "100%" }]}
           buttonStyle={[styles.btn, { borderRadius: 0 }]}
           titleStyle={styles.btnTitle}
         />
       </Dialog>
-      {/* <Text style={styles.text}>
-        Please Fill the form below with your details
-      </Text> */}
-
       <View
         style={{
           backgroundColor: "#ff5349",
